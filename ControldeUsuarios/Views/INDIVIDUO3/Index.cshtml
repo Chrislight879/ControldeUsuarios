@@ -1,0 +1,139 @@
+﻿@model IEnumerable<ControldeUsuarios.Models.INDIVIDUO3>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<p>
+    <!-- Enlace para crear un nuevo objeto de tipo INDIVIDUO3 -->
+    @Html.ActionLink("Create New", "Create")
+</p>
+
+<!-- Formulario de búsqueda -->
+<form id="searchForm" method="get" class="form-inline">
+    <!-- Campo de entrada para el término de búsqueda -->
+    <div class="form-group mr-2">
+        <!-- Etiqueta oculta para accesibilidad -->
+        <label for="searchTerm" class="sr-only">Search Term:</label>
+        <!-- Campo de texto donde el usuario ingresa el término de búsqueda -->
+        <input type="text" name="searchTerm" id="searchTerm" class="form-control" placeholder="Search Term" />
+    </div>
+
+    <!-- Menú desplegable para seleccionar el tipo de búsqueda -->
+    <div class="form-group mr-2">
+        <!-- Etiqueta oculta para accesibilidad -->
+        <label for="searchType" class="sr-only">Search By:</label>
+        <!-- Menú desplegable para seleccionar el criterio de búsqueda (Nombre, Apellido, Edad, Correo) -->
+        <select name="searchType" id="searchType" class="form-control">
+            <option value="Nombre">Nombre</option>
+            <option value="Apellido">Apellido</option>
+            <option value="Edad">Edad</option>
+            <option value="Correo">Correo</option>
+        </select>
+    </div>
+
+    <!-- Botón para enviar el formulario de búsqueda -->
+    <button type="button" id="searchButton" class="btn btn-primary">Search</button>
+</form>
+
+<!-- Tabla para mostrar los resultados de búsqueda -->
+<table id="resultsTable" class="table mt-3">
+    <thead>
+        <tr>
+            <!-- Encabezados de la tabla para cada columna de datos -->
+            <th>@Html.DisplayNameFor(model => model.Nombre)</th>
+            <th>@Html.DisplayNameFor(model => model.Apellido)</th>
+            <th>@Html.DisplayNameFor(model => model.Edad)</th>
+            <th>@Html.DisplayNameFor(model => model.Correo)</th>
+            <th></th> <!-- Columna para los enlaces de acción (Editar, Detalles, Eliminar) -->
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Los resultados de búsqueda se insertarán aquí por AJAX -->
+        @foreach (var item in Model)
+        {
+            <tr>
+                <!-- Muestra el valor del campo Nombre del objeto -->
+                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                <!-- Muestra el valor del campo Apellido del objeto -->
+                <td>@Html.DisplayFor(modelItem => item.Apellido)</td>
+                <!-- Muestra el valor del campo Edad del objeto -->
+                <td>@Html.DisplayFor(modelItem => item.Edad)</td>
+                <!-- Muestra el valor del campo Correo del objeto -->
+                <td>@Html.DisplayFor(modelItem => item.Correo)</td>
+                <td>
+                    <!-- Enlaces para realizar acciones sobre el objeto (Editar, Ver Detalles, Eliminar) -->
+                    @Html.ActionLink("Edit", "Edit", new { id = item.Id_individuo }) |
+                    @Html.ActionLink("Details", "Details", new { id = item.Id_individuo }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.Id_individuo })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <!-- Incluye la biblioteca jQuery desde una CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Configura el evento click para el botón de búsqueda
+            $("#searchButton").click(function () {
+                performSearch();
+            });
+
+            // Configura el evento keypress para el campo de texto (para permitir búsqueda al presionar Enter)
+            $("#searchTerm").on("keypress", function (e) {
+                if (e.which == 13) { // Si se presiona la tecla Enter
+                    e.preventDefault(); // Previene el comportamiento por defecto del Enter (submit del formulario)
+                    performSearch(); // Ejecuta la búsqueda
+                }
+            });
+
+            // Función para realizar la búsqueda
+            function performSearch() {
+                var searchTerm = $("#searchTerm").val(); // Obtiene el término de búsqueda del campo de texto
+                var searchType = $("#searchType").val(); // Obtiene el tipo de búsqueda seleccionado
+
+                $.ajax({
+                    url: '@Url.Action("IndexFiltered")', // URL del método del controlador que maneja la búsqueda
+                    type: 'GET', // Método de la solicitud HTTP
+                    data: {
+                        searchTerm: searchTerm, // Parámetro de búsqueda
+                        searchType: searchType // Tipo de búsqueda
+                    },
+                    success: function (data) {
+                        // Actualiza la tabla con los resultados de la búsqueda
+                        var tableBody = $("#resultsTable tbody"); // Selecciona el cuerpo de la tabla
+                        tableBody.empty(); // Limpia el contenido actual del cuerpo de la tabla
+
+                        if (data.length === 0) { // Si no hay resultados
+                            tableBody.append('<tr><td colspan="5" class="text-center">No results found</td></tr>'); // Muestra mensaje de "No results found"
+                        } else {
+                            // Itera sobre cada resultado y añade una fila a la tabla
+                            $.each(data, function (index, item) {
+                                var row = '<tr>' +
+                                    '<td>' + item.Nombre + '</td>' +
+                                    '<td>' + item.Apellido + '</td>' +
+                                    '<td>' + (item.Edad || 'N/A') + '</td>' + // Muestra "N/A" si la edad es null
+                                    '<td>' + item.Correo + '</td>' +
+                                    '<td>' +
+                                    '<a href="/INDIVIDUO3/Edit/' + item.Id_individuo + '">Edit</a> | ' +
+                                    '<a href="/INDIVIDUO3/Details/' + item.Id_individuo + '">Details</a> | ' +
+                                    '<a href="/INDIVIDUO3/Delete/' + item.Id_individuo + '">Delete</a>' +
+                                    '</td>' +
+                                    '</tr>';
+                                tableBody.append(row); // Añade la fila creada al cuerpo de la tabla
+                            });
+                        }
+                    },
+                    error: function () {
+                        alert('Error al realizar la búsqueda.'); // Muestra un mensaje de error si la solicitud falla
+                    }
+                });
+            }
+        });
+    </script>
+}
